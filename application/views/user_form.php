@@ -264,6 +264,7 @@
                     $('button').attr('onclick', 'insertOrUpdateUser()');
                     $('.edit-btn').hide();
                     $('.delete-btn').hide();
+                    $('th:contains("Operation"), td:nth-child(3)').hide();
                 },
                 error: function() {
                     alert('Failed to fetch user details!');
@@ -278,6 +279,7 @@
 
             $('button').text('Insert User');
             $('button').attr('onclick', 'insertOrUpdateUser()');
+            $('th:contains("Operation"), td:nth-child(3)').show();
 
             editingUserId = null;
         }
