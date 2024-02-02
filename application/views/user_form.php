@@ -86,7 +86,7 @@
         <label for="password">Password:</label>
         <input type="password" name="password" id="password" required><br>
 
-        <button type="button" onclick="insertUser()">Insert User</button>
+        <button type="button" onclick="insertUser($('#username').val(), $('#email').val(), $('#password').val())">Insert User</button>
     </form>
 
     <h2>User Records</h2>
@@ -123,6 +123,13 @@
         }
 
         function insertUser(username, email, password) {
+            if (checkExistingUser(username, email)) {
+                alert('Username or email already exists!');
+                loadUserTable();
+                resetForm();
+                return;
+            }
+
             $.ajax({
                 type: "post",
                 url: "<?= base_url() . 'usercontroller/insertUser' ?>",
@@ -132,19 +139,25 @@
                     'password': password
                 },
                 dataType: "json",
-                success: function(data) {
+                success: function (data) {
                     alert('User added successfully!');
-
                     loadUserTable();
                     resetForm();
                 },
-                error: function() {
+                error: function () {
                     alert('Failed to add user!');
                 }
             });
         }
 
         function updateUser(userId, username, email, password) {
+            if (checkExistingUser(username, email, userId)) {
+                alert('Username or email already exists!');
+                loadUserTable();
+                resetForm();
+                return;
+            }
+
             var confirmUpdate = confirm('Are you sure you want to update User ID ' + userId + '?');
             if (!confirmUpdate) {
                 return;
@@ -159,23 +172,46 @@
                     'password': password
                 },
                 dataType: "json",
-                success: function(data) {
+                success: function (data) {
                     alert('User updated successfully!');
-
                     loadUserTable();
                     resetForm();
                 },
-                error: function() {
+                error: function () {
                     alert('Failed to update user!');
                 }
             });
+        }
+
+        function checkExistingUser(username, email, userId) {
+            var exists = false;
+
+            $.ajax({
+                type: "post",
+                async: false,
+                url: "<?= base_url() . 'usercontroller/getAllUsers' ?>",
+                dataType: "json",
+                success: function (data) {
+                    $.each(data, function (index, user) {
+                        if ((user.username === username || user.email === email) && user.id != userId) {
+                            exists = true;
+                            return false;
+                        }
+                    });
+                },
+                error: function () {
+                    alert('Failed to check existing users!');
+                }
+            });
+
+            return exists;
         }
 
         function editUser(userId) {
             editingUserId = userId;
 
             $.ajax({
-                type: "get",
+                type: "post",
                 url: "<?= base_url() . 'usercontroller/editUser/' ?>" + userId,
                 dataType: "json",
                 success: function(data) {
@@ -218,7 +254,7 @@
             editingUserId = userId;
             
             $.ajax({
-                type: "get",
+                type: "post",
                 url: "<?= base_url() . 'usercontroller/editUser/' ?>" + userId,
                 dataType: "json",
                 success: function(data) {
@@ -234,7 +270,6 @@
                 }
             });
         }
-
 
         function resetForm() {
             $('#username').val('');
@@ -272,6 +307,5 @@
         }
         loadUserTable();
     </script>
-
 </body>
 </html>
