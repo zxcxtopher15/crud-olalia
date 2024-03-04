@@ -11,6 +11,7 @@ class User_model extends CI_Model {
         $query = $this->db->get('users');
         return $query->result_array();
     }
+    
 
     public function deleteUser($userId) {
         return $this->db->delete('users', array('id' => $userId));

@@ -1,108 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Form</title>
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            font-size: 20px;
-            font-weight: bold;
-            margin: 20px;
-        }
-
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-
-        h2 {
-            color: #666;
-        }
-
-        form {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
-
-        button {
-            padding: 10px;
-            background-color: #007BFF;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
-
-        .edit-btn, .delete-btn {
-            padding: 5px;
-            margin-right: 5px;
-            cursor: pointer;
-        }
-    </style>
+    <!-- Add missing CSS for DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap4.min.css">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
+
 <body>
-    <h1>CRUD OPERATIONS</h1>
-    
-    <form id="userForm">
-        <label for="username">Username:</label>
-        <input type="text" name="username" id="username" required><br>
+    <div class="container mt-4">
+        <h1 class="text-center">CRUD OPERATIONS</h1>
 
-        <label for="email">Email:</label>
-        <input type="email" name="email" id="email" required><br>
+        <form id="userForm">
+            <!-- Add a hidden input field for user ID -->
+            <input type="hidden" id="userId" name="userId">
 
-        <label for="password">Password:</label>
-        <input type="password" name="password" id="password" required><br>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" class="form-control" name="username" id="username" required>
+            </div>
 
-        <button type="button" onclick="insertUser($('#username').val(), $('#email').val(), $('#password').val())">Insert User</button>
-    </form>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" class="form-control" name="email" id="email" required>
+            </div>
 
-    <h2>User Records</h2>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Operation</th>
-            </tr>
-        </thead>
-        <tbody id="userTableBody">
-        </tbody>
-    </table>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" class="form-control" name="password" id="password" required>
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="insertOrUpdateUser()">Insert User</button>
+        </form>
+
+        <h2 class="mt-4">User Records</h2>
+        <table class="table table-bordered table-hover" id="userTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Operations</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $cnt = 1; ?>
+                <?php foreach ($record as $row) : ?>
+                    <tr>
+                        <td><?php echo $cnt; ?></td>
+                        <td><?php echo $row['username']; ?></td>
+                        <td><?php echo $row['email']; ?></td>
+                    </tr>
+                    <?php $cnt++; ?>
+                <?php endforeach ?>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 
     <script>
+        $(document).ready(function() {
+            $('#userTable').DataTable({
+                "ajax": {
+                    "url": "<?= base_url() . 'usercontroller/getAllUsers' ?>",
+                    "type": "POST",
+                    "dataType": "json",
+                    "dataSrc": ""
+                },
+                "columns": [{
+                        "data": "id"
+                    },
+                    {
+                        "data": "username"
+                    },
+                    {
+                        "data": "email"
+                    },
+                    {
+                        "data": null,
+                        "render": function(data, type, row) {
+                            return '<button class="btn btn-sm btn-primary" onclick="editUser(' + row.id + ')">Edit</button>' +
+                                '<button class="btn btn-sm btn-danger" onclick="deleteUser(' + row.id + ')">Delete</button>';
+                        }
+                    }
+                ]
+            });
+        });
+
+
         var editingUserId = null;
 
         function insertOrUpdateUser() {
@@ -125,7 +119,6 @@
         function insertUser(username, email, password) {
             if (checkExistingUser(username, email)) {
                 alert('Username or email already exists!');
-                loadUserTable();
                 resetForm();
                 return;
             }
@@ -139,12 +132,12 @@
                     'password': password
                 },
                 dataType: "json",
-                success: function (data) {
+                success: function(data) {
                     alert('User added successfully!');
-                    loadUserTable();
+                    $('#userTable').DataTable().ajax.reload();
                     resetForm();
                 },
-                error: function () {
+                error: function() {
                     alert('Failed to add user!');
                 }
             });
@@ -153,7 +146,7 @@
         function updateUser(userId, username, email, password) {
             if (checkExistingUser(username, email, userId)) {
                 alert('Username or email already exists!');
-                loadUserTable();
+                $('#userTable').DataTable().ajax.reload();
                 resetForm();
                 return;
             }
@@ -172,12 +165,12 @@
                     'password': password
                 },
                 dataType: "json",
-                success: function (data) {
+                success: function(data) {
                     alert('User updated successfully!');
-                    loadUserTable();
+                    $('#userTable').DataTable().ajax.reload();
                     resetForm();
                 },
-                error: function () {
+                error: function() {
                     alert('Failed to update user!');
                 }
             });
@@ -191,15 +184,15 @@
                 async: false,
                 url: "<?= base_url() . 'usercontroller/getAllUsers' ?>",
                 dataType: "json",
-                success: function (data) {
-                    $.each(data, function (index, user) {
+                success: function(data) {
+                    $.each(data, function(index, user) {
                         if ((user.username === username || user.email === email) && user.id != userId) {
                             exists = true;
                             return false;
                         }
                     });
                 },
-                error: function () {
+                error: function() {
                     alert('Failed to check existing users!');
                 }
             });
@@ -220,7 +213,7 @@
                     $('button').text('Update User');
                     $('button').attr('onclick', 'insertOrUpdateUser()');
 
-                    
+
                 },
                 error: function() {
                     alert('Failed to fetch user details for editing!');
@@ -228,31 +221,9 @@
             });
         }
 
-        function loadUserTable() {
-            $.ajax({
-                type: "post",
-                url: "<?= base_url() . 'usercontroller/getAllUsers' ?>",
-                dataType: "json",
-                success: function(data) {
-                    $('#userTableBody').empty();
-                    $.each(data, function(index, user) {
-                        var row = '<tr><td>' + user.username + '</td><td>' + user.email + '</td>' +
-                                '<td>' +
-                                '<button class="edit-btn" onclick="editUser(' + user.id + ')">Edit</button>' +
-                                ' <button class="delete-btn" onclick="deleteUser(' + user.id + ')">Delete</button>' +
-                                '</td></tr>';
-                        $('#userTableBody').append(row);
-                    });
-                },
-                error: function() {
-                    alert('Failed to load user records!');
-                }
-            });
-        }
-
         function editUser(userId) {
             editingUserId = userId;
-            
+
             $.ajax({
                 type: "post",
                 url: "<?= base_url() . 'usercontroller/editUser/' ?>" + userId,
@@ -264,7 +235,7 @@
                     $('button').attr('onclick', 'insertOrUpdateUser()');
                     $('.edit-btn').hide();
                     $('.delete-btn').hide();
-                    $('th:contains("Operation"), td:nth-child(3)').hide();
+                    $('th:contains("Operation"), td:nth-child(4)').hide();
                 },
                 error: function() {
                     alert('Failed to fetch user details!');
@@ -279,7 +250,7 @@
 
             $('button').text('Insert User');
             $('button').attr('onclick', 'insertOrUpdateUser()');
-            $('th:contains("Operation"), td:nth-child(3)').show();
+            $('th:contains("Operation"), td:nth-child(4)').show();
 
             editingUserId = null;
         }
@@ -297,7 +268,7 @@
                 success: function(data) {
                     if (data.success) {
                         alert('User deleted successfully!');
-                        loadUserTable();
+                        $('#userTable').DataTable().ajax.reload();
                     } else {
                         alert('Failed to delete user!');
                     }
@@ -307,7 +278,11 @@
                 }
             });
         }
-        loadUserTable();
     </script>
+
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 </body>
+
 </html>

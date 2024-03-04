@@ -9,7 +9,8 @@ class UserController extends CI_Controller {
     }
 
     public function index() {
-        $this->load->view('user_form');
+        $view_data['record'] = $this->User_model->getAllUsers();
+        $this->load->view('user_form', $view_data);
     }
 
     public function insertUser() {
